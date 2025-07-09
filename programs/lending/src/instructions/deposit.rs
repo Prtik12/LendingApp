@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
 
-use crate::state::Bank;
+use crate::state::{Bank, User};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -30,4 +30,17 @@ pub struct Deposit<'info> {
         seeds = [signer.key().as_ref()],
         bump,
     )]   
+    pub user_account: Account<'info, User>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = signer,
+        associated_token::token_program = token_program,
+    )]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
+
