@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked}};
 
 use crate::state::{Bank, User};
 
@@ -60,6 +60,13 @@ pub fn process_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     if amount > deposited_value {
         return Err(ErrorCode::InsufficientFunds.into());
     }
+
+    let transfer_cpi_accounts = TransferChecked {
+        from: ctx.accounts.bank_token_account.to_account_info(),
+        to: ctx.accounts.user_token_account.to_account_info(),
+        authority: ctx.accounts.bank_token_account.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+    };
 
     Ok(())
 }
