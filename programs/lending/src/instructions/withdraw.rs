@@ -3,6 +3,8 @@ use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, Toke
 
 use crate::state::{Bank, User};
 
+use crate::error::ErrorCode;
+
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     #[account(mut)]
@@ -42,4 +44,22 @@ pub struct Withdraw<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+}
+
+pub fn process_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+    let user = &mut ctx.accounts.user_account;
+
+    let deposited_value: u64;
+
+    if ctx.accounts.mint.to_account_info().key() == user.usdc_address {
+        deposited_value = user.deposited_usdc;
+    } else {
+        deposited_value = user.deposited_sol;
+    }
+
+    if amount > deposited_value {
+        return Err(ErrorCode::InsufficientFunds.into());
+    }
+
+    Ok(())
 }
