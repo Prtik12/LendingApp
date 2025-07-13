@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-use crate::state::Bank;
+use crate::state::{Bank, User};
 
 
 #[derive(Accounts)]
@@ -40,7 +41,9 @@ pub struct Borrow<'info> {
         associated_token::token_program = token_program, 
     )]
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub price_update: Account<'info, PriceUpdateV2>,
     pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
+
