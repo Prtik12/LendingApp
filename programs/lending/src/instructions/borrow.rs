@@ -47,3 +47,20 @@ pub struct Borrow<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
+pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
+
+    let bank = &mut ctx.accounts.bank;
+    let user = &mut ctx.accounts.user_account;
+
+    let price_update = &mut ctx.accounts.price_update;
+
+    let total_collateral: u64;
+
+    match ctx.accounts.mint.to_account_info().key(){
+        key if key == user.usdc_address => {
+            total_collateral = user.deposited_usdc;
+        }
+    }
+
+    Ok(())
+}
