@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 
-use crate::{constants::{MAX_AGE, SOL_USD_FEED_ID}, state::{Bank, User}};
+use crate::{constants::{MAX_AGE, SOL_USD_FEED_ID, USDC_USD_FEED_ID}, state::{Bank, User}};
 
 
 #[derive(Accounts)]
@@ -62,6 +62,12 @@ pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
             let sol_price = price_update.get_price_no_older_than(&Clock::get()?, MAX_AGE, &sol_feed_id)?;
             let new_value  = calculate_accrued_interest(user.deposited_sol, bank.interest_rate, user.last_updated)?;
             let total_collateral = sol_price.price as u64 * new_value;
+        }
+        _ => {
+            let usdc_feed_id = get_feed_id_from_hex(USDC_USD_FEED_ID)?; 
+            let usdc_price = price_update.get_price_no_older_than(&Clock::get()?, MAX_AGE, &usdc_feed_id)?;
+            let new_value = calculate_accrued_interest(user.deposited_usdc, bank.interest_rate, user.last_updated)?;
+            let total_collateral = usdc_price.price as u64 * new_value;
         }
     }
 
