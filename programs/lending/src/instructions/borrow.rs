@@ -60,6 +60,8 @@ pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
         key if key == user.usdc_address => {
             let sol_feed_id =  get_feed_id_from_hex(SOL_USD_FEED_ID)?;
             let sol_price = price_update.get_price_no_older_than(&Clock::get()?, MAX_AGE, &sol_feed_id)?;
+            let new_value  = calculate_accrued_interest(user.deposited_sol, bank.interest_rate, user.last_updated)?;
+            let total_collateral = sol_price.price as u64 * new_value;
         }
     }
 
@@ -69,5 +71,7 @@ pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
 fn calculate_accrued_interest(deposited: u64, interest_rate: u64, last_updated: i64) -> Result<(u64)> {
     let current_time = Clock::get()?.unix_timestamp;
     let time_diff = current_time - last_updated;
-    
+    let new_value = (deposited as f64 * E.powf(interest_rate as f32 * time_diff as f32) as f64 ) as u64;
+    Ok(new_value)
+
 }
