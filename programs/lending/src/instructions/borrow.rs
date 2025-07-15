@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface}};
-use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
+use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 
-use crate::state::{Bank, User};
+use crate::{constants::{MAX_AGE, SOL_USD_FEED_ID}, state::{Bank, User}};
 
 
 #[derive(Accounts)]
@@ -58,9 +58,16 @@ pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
 
     match ctx.accounts.mint.to_account_info().key(){
         key if key == user.usdc_address => {
-            total_collateral = user.deposited_usdc;
+            let sol_feed_id =  get_feed_id_from_hex(SOL_USD_FEED_ID)?;
+            let sol_price = price_update.get_price_no_older_than(&Clock::get()?, MAX_AGE, &sol_feed_id)?;
         }
     }
 
     Ok(())
+}
+
+fn calculate_accrued_interest(deposited: u64, interest_rate: u64, last_updated: i64) -> Result<(u64)> {
+    let current_time = Clock::get()?.unix_timestamp;
+    let time_diff = current_time - last_updated;
+    
 }

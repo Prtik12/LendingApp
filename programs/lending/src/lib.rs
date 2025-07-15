@@ -4,6 +4,7 @@ use crate::instructions::*;
 mod state;
 mod instructions;
 mod error;
+mod constants;
 
 declare_id!("rcVshHFGxjB6Tq9fZusUSzEAuC6YkFFRAc2M4KngHk2");
 
