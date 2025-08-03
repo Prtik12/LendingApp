@@ -9,7 +9,7 @@ mod constants;
 declare_id!("rcVshHFGxjB6Tq9fZusUSzEAuC6YkFFRAc2M4KngHk2");
 
 #[program]
-pub mod lending {
+pub mod lending_protocol {
     use super::*;
 
     pub fn init_bank(ctx: Context<InitBank>, liquidation_threshold: u64, max_ltv: u64) ->  Result<()> {
@@ -34,6 +34,10 @@ pub mod lending {
 
     pub fn repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
         process_repay(ctx, amount)
+    }
+
+    pub fn liquidate(ctx: Context<Liquidate>) -> Result<()> {
+        process_liquidate(ctx)
     }
     
 }
