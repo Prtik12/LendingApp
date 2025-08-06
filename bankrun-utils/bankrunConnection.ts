@@ -54,6 +54,7 @@ import {
     public readonly context: ProgramTestContext;
     public readonly provider: BankrunProvider;
     public readonly commitment: Commitment = 'confirmed';
+      static connection: any;
   
     constructor(context: ProgramTestContext) {
       this.context = context;

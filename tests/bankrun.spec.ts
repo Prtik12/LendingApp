@@ -1,14 +1,15 @@
 import { describe } from 'node:test';
-import IDL from '../target/idl/lending.json';
-import { Lending } from '../target/types/lending_protocol';
+import IDL from '../target/idl/lending_protocol.json';
+import { LendingProtocol as Lending } from '../target/types/lending_protocol';
 import { BanksClient, ProgramTestContext, startAnchor } from 'solana-bankrun';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { BankrunProvider } from 'anchor-bankrun';
 import { PythSolanaReceiver } from '@pythnetwork/pyth-solana-receiver';
 import { BankrunContextWrapper } from '../bankrun-utils/bankrunConnection';
-import { Program } from '@coral-xyz/anchor';
+import { BN, Program } from '@coral-xyz/anchor';
 import { Keypair } from '@solana/web3.js';
-import { createMint } from 'spl-token-bankrun';
+import { createMint, mintTo, createAccount } from 'spl-token-bankrun';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 describe('Lending Smart Contract Test', async () => {
     let context: ProgramTestContext;
@@ -82,4 +83,123 @@ describe('Lending Smart Contract Test', async () => {
     [Buffer.from("treasury", mintSol.toBuffer())],
      program.programId
  );
+
+ it("Test Init and Fund Bank", async () => {
+    const initUSDCBankTx = await program.methods.initBank(new BN(1), new BN(1)).accounts({
+        signer: signer.publicKey,
+        mint: mintUSDC,
+        tokenProgram: TOKEN_PROGRAM_ID,
+    }).rpc({ commitment: "confirmed" });
+
+    console.log( "Create USDC Bank Account:", initUSDCBankTx);
+
+    const amount = 10_000 * 10 ** 9;
+
+    const mintTx = await mintTo(
+        banksClient,
+        signer,
+        mintUSDC,
+        usdcBankAccount,
+        signer,
+        amount
+    );
+
+    console.log("Mint USDC to Bank:", mintTx);
+});
+
+    it("Test Init User", async () => {
+        const initUserTx = await program.methods.initUser(mintUSDC).accounts({
+            signer: signer.publicKey,
+        }).rpc({ commitment: "confirmed" });
+
+        console.log("Init User:", initUserTx);
+    });
+
+    it("Test Init and Fund Sol Bank", async () => {
+        const initSolBankTx = await program.methods.initBank(new BN(2), new BN(1)).accounts({
+            signer: signer.publicKey,
+            mint: mintSol,
+            tokenProgram: TOKEN_PROGRAM_ID,
+        }).rpc({ commitment: "confirmed" });
+
+        console.log("Create SOL Bank Account:", initSolBankTx);
+
+        const amount = 10_000 * 10 ** 9;
+
+        const mintTx = await mintTo(
+            banksClient,
+            signer,
+            mintSol,
+            solBankAccount,
+            signer,
+            amount
+        );
+
+        console.log("Mint SOL to Bank:", mintTx);
+    });
+
+    it("Create and Fund Token Accounts", async () => {
+        const USDCTokenAccount = await createAccount(
+            banksClient,
+            signer,
+            mintUSDC,
+            signer.publicKey
+        );
+
+        console.log("USDC Token Account:", USDCTokenAccount);
+
+        const amount = 10_000 * 10 ** 9;
+
+        const mintUSDCTx = await mintTo(
+            banksClient,
+            signer,
+            mintUSDC,
+            USDCTokenAccount,
+            signer,
+            amount
+        );
+
+        console.log("Mint USDC to User:", mintUSDCTx);
+
+        it("Test Deposit", async () => {
+            const depositUSDC = await program.methods.deposit( new BN(100000000000)).accounts({
+                signer: signer.publicKey,
+                mint: mintUSDC,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            }).rpc({ commitment: "confirmed" }); 
+
+            console.log("Deposit USDC:", depositUSDC);
+        });
+
+        it("Test Borrow", async () => {
+            const borrowSOL = await program.methods.borrow(new BN(1)).accounts({
+                signer: signer.publicKey,
+                mint: mintSol,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                priceUpdate: solUsdPriceFeedAccount,
+            }).rpc({ commitment: "confirmed" });
+
+            console.log("Borrow SOL:", borrowSOL);
+        });
+
+        it("Test Repay", async () => {
+            const repaySOL = await program.methods.repay(new BN(1)).accounts({
+                signer: signer.publicKey,
+                mint: mintSol,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            }).rpc({ commitment: "confirmed" });
+
+            console.log("Repay SOL:", repaySOL);
+        });
+
+        it("Test Withdraw", async () => {
+            const withdrawUSDC = await program.methods.withdraw(new BN(100)).accounts({
+                signer: signer.publicKey,
+                mint: mintUSDC,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            }).rpc({ commitment: "confirmed" });
+
+            console.log("Withdraw USDC:", withdrawUSDC);
+        });
+    });
 });
